@@ -14,7 +14,7 @@ import { Budget } from '@/lib/api/client';
 const BUDGET_CONTRACT_ID = process.env.NEXT_PUBLIC_BUDGET_CONTRACT_ID || '';
 const LOCAL_BUDGETS_KEY = 'stellarspend_local_budgets';
 
-export function triggerNotification(type: 'success' | 'error' | 'info', message: string) {
+export function triggerNotification(type: 'success' | 'error' | 'info', message: string): void {
   if (typeof window !== 'undefined') {
     const event = new CustomEvent('stellarspend_notification', {
       detail: { type, message },
@@ -36,13 +36,13 @@ export function getMockBudgetsFallback(): Budget[] {
   return [];
 }
 
-export function setMockBudgetsFallback(budgets: Budget[]) {
+export function setMockBudgetsFallback(budgets: Budget[]): void {
   if (typeof window !== 'undefined') {
     localStorage.setItem(LOCAL_BUDGETS_KEY, JSON.stringify(budgets));
   }
 }
 
-function toScVal(value: unknown) {
+function toScVal(value: unknown): any {
   if (typeof value === 'string' && value.startsWith('G') && value.length === 56) {
     return new Address(value).toScVal();
   }
@@ -53,10 +53,10 @@ function toScVal(value: unknown) {
 }
 
 export async function callContractView<T>(
-  publicKey: string,
-  contractId: string,
-  method: string,
-  args: unknown[]
+    publicKey: string,
+    contractId: string,
+    method: string,
+    args: unknown[]
 ): Promise<T> {
   const server = getSorobanServer();
   const networkPassphrase = getNetworkPassphrase();
@@ -69,9 +69,9 @@ export async function callContractView<T>(
     fee: '100',
     networkPassphrase,
   })
-    .addOperation(contract.call(method, ...scArgs))
-    .setTimeout(30)
-    .build();
+      .addOperation(contract.call(method, ...scArgs))
+      .setTimeout(30)
+      .build();
 
   const sim = await server.simulateTransaction(tx);
 
@@ -87,11 +87,11 @@ export async function callContractView<T>(
 }
 
 export async function submitContractTx(
-  publicKey: string,
-  contractId: string,
-  method: string,
-  args: unknown[],
-  statusCallback?: (status: string) => void
+    publicKey: string,
+    contractId: string,
+    method: string,
+    args: unknown[],
+    statusCallback?: (status: string) => void
 ): Promise<string | null> {
   const server = getSorobanServer();
   const networkPassphrase = getNetworkPassphrase();
@@ -108,9 +108,9 @@ export async function submitContractTx(
     fee: '100',
     networkPassphrase,
   })
-    .addOperation(contract.call(method, ...scArgs))
-    .setTimeout(30)
-    .build() as Transaction;
+      .addOperation(contract.call(method, ...scArgs))
+      .setTimeout(30)
+      .build() as Transaction;
 
   if (statusCallback) statusCallback('Simulating transaction...');
   const sim = await server.simulateTransaction(tx);
@@ -205,9 +205,9 @@ export async function fetchBudgets(publicKey: string): Promise<Budget[]> {
 }
 
 export async function createBudget(
-  publicKey: string,
-  budgetData: Omit<Budget, 'id' | 'createdAt' | 'updatedAt'>,
-  statusCallback?: (status: string) => void
+    publicKey: string,
+    budgetData: Omit<Budget, 'id' | 'createdAt' | 'updatedAt'>,
+    statusCallback?: (status: string) => void
 ): Promise<Budget> {
   const newId = `budget_${Date.now()}`;
   if (!BUDGET_CONTRACT_ID) {
@@ -224,20 +224,20 @@ export async function createBudget(
   }
   try {
     const result = await submitContractTx(
-      publicKey,
-      BUDGET_CONTRACT_ID,
-      'create_budget',
-      [
         publicKey,
-        newId,
-        budgetData.name,
-        budgetData.amount,
-        budgetData.category,
-        budgetData.asset,
-        budgetData.startDate,
-        budgetData.endDate,
-      ],
-      statusCallback
+        BUDGET_CONTRACT_ID,
+        'create_budget',
+        [
+          publicKey,
+          newId,
+          budgetData.name,
+          budgetData.amount,
+          budgetData.category,
+          budgetData.asset,
+          budgetData.startDate,
+          budgetData.endDate,
+        ],
+        statusCallback
     );
 
     const newBudget: Budget = {
@@ -255,10 +255,10 @@ export async function createBudget(
 }
 
 export async function updateBudget(
-  publicKey: string,
-  id: string,
-  budgetData: Partial<Omit<Budget, 'id' | 'createdAt'>>,
-  statusCallback?: (status: string) => void
+    publicKey: string,
+    id: string,
+    budgetData: Partial<Omit<Budget, 'id' | 'createdAt'>>,
+    statusCallback?: (status: string) => void
 ): Promise<Budget> {
   if (!BUDGET_CONTRACT_ID) {
     const mockBudgets = getMockBudgetsFallback();
@@ -277,20 +277,20 @@ export async function updateBudget(
     const existing = fullMock.find((b) => b.id === id);
 
     await submitContractTx(
-      publicKey,
-      BUDGET_CONTRACT_ID,
-      'update_budget',
-      [
         publicKey,
-        id,
-        budgetData.name || existing?.name || '',
-        budgetData.amount || existing?.amount || 0,
-        budgetData.category || existing?.category || '',
-        budgetData.asset || existing?.asset || 'XLM',
-        budgetData.startDate || existing?.startDate || '',
-        budgetData.endDate || existing?.endDate || '',
-      ],
-      statusCallback
+        BUDGET_CONTRACT_ID,
+        'update_budget',
+        [
+          publicKey,
+          id,
+          budgetData.name || existing?.name || '',
+          budgetData.amount || existing?.amount || 0,
+          budgetData.category || existing?.category || '',
+          budgetData.asset || existing?.asset || 'XLM',
+          budgetData.startDate || existing?.startDate || '',
+          budgetData.endDate || existing?.endDate || '',
+        ],
+        statusCallback
     );
 
     const mockBudgets = getMockBudgetsFallback();
@@ -301,7 +301,6 @@ export async function updateBudget(
         ...budgetData,
         updatedAt: new Date().toISOString(),
       };
-      setMockBudgetsFallback(mockBudgets);
       return mockBudgets[index];
     }
 
@@ -324,9 +323,9 @@ export async function updateBudget(
 }
 
 export async function deleteBudget(
-  publicKey: string,
-  id: string,
-  statusCallback?: (status: string) => void
+    publicKey: string,
+    id: string,
+    statusCallback?: (status: string) => void
 ): Promise<void> {
   if (!BUDGET_CONTRACT_ID) {
     const mockBudgets = getMockBudgetsFallback();
@@ -336,11 +335,11 @@ export async function deleteBudget(
   }
   try {
     await submitContractTx(
-      publicKey,
-      BUDGET_CONTRACT_ID,
-      'delete_budget',
-      [publicKey, id],
-      statusCallback
+        publicKey,
+        BUDGET_CONTRACT_ID,
+        'delete_budget',
+        [publicKey, id],
+        statusCallback
     );
 
     const mockBudgets = getMockBudgetsFallback();
