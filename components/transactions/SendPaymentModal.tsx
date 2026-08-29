@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 import { X, Send, ShieldAlert, Cpu, CheckCircle2, AlertTriangle, RefreshCw } from "lucide-react";
 import { sendPayment } from "@/lib/api/client";
 import { generateSpendingProof } from "@/lib/zk/generateSpendingProof";
-import { useNotifications } from "@/context/NotificationContext";
 import { useOffline } from "@/components/offline/OfflineProvider";
+import { useToast } from "@/components/ui/use-toast";
 import { getRemaining, recordSpend } from "@/lib/stellar/spendingLimitsContract";
 import useWallet from "@/hooks/useWallet";
 
@@ -19,8 +19,8 @@ const ZK_PROOF_THRESHOLD = Number(process.env.NEXT_PUBLIC_ZK_LIMIT_THRESHOLD ?? 
 const ZK_SPENDING_LIMIT_CEILING = Number(process.env.NEXT_PUBLIC_ZK_LIMIT_CEILING ?? 500);
 
 export default function SendPaymentModal({ onClose }: SendPaymentModalProps) {
-  const { addNotification } = useNotifications();
   const { isOnline, queueAction } = useOffline();
+  const { toast } = useToast();
   const { freighter } = useWallet();
   const userPublicKey = freighter.publicKey || "GDQD6A4P422X44QW6UXO6R6AOTHOV4C6A4P422X44QW6UXO6R6AOTHO";
 
@@ -28,6 +28,7 @@ export default function SendPaymentModal({ onClose }: SendPaymentModalProps) {
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
   const [asset, setAsset] = useState<"XLM" | "USDC" | "EURC">("USDC");
+  const [memo, setMemo] = useState("");
   const [formError, setFormError] = useState("");
 
   // Process lifecycle states
@@ -85,10 +86,10 @@ export default function SendPaymentModal({ onClose }: SendPaymentModalProps) {
         `Send ${parsedAmount} ${asset} to ${recipient.substring(0, 8)}...`,
         { recipient, amount: parsedAmount, asset }
       );
-      addNotification(
-        "info",
-        `Offline: Payment of ${parsedAmount} ${asset} has been queued.`
-      );
+      toast({
+        title: "Payment Queued",
+        description: `Offline: Payment of ${parsedAmount} ${asset} has been queued.`,
+      });
       onClose();
       return;
     }
@@ -135,7 +136,11 @@ export default function SendPaymentModal({ onClose }: SendPaymentModalProps) {
         console.error("ZK Proving failed:", zkErr);
         setStatus("zk_failed");
         setFormError(zkErrMsg || "Cryptographic proof generation failed constraint checks.");
-        addNotification("error", `ZK proving failed: ${zkErrMsg}`);
+        toast({
+          title: "ZK Proving Failed",
+          description: zkErrMsg || "Cryptographic proof generation failed constraint checks.",
+          variant: "destructive",
+        });
         return;
       }
     }
@@ -153,12 +158,19 @@ export default function SendPaymentModal({ onClose }: SendPaymentModalProps) {
 
       setTxHash(transaction.hash);
       setStatus("success");
-      addNotification("success", `Successfully sent ${parsedAmount} ${asset} to ${recipient.substring(0, 8)}...`);
+      toast({
+        title: "Payment Successful",
+        description: `Successfully sent ${parsedAmount} ${asset} to ${recipient.substring(0, 8)}...`,
+      });
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
       setStatus("idle");
       setFormError(errMsg || "Transaction submission failed.");
-      addNotification("error", `Payment failed: ${errMsg}`);
+      toast({
+        title: "Payment Failed",
+        description: errMsg || "Transaction submission failed.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -221,6 +233,7 @@ export default function SendPaymentModal({ onClose }: SendPaymentModalProps) {
                   placeholder="G..."
                   value={recipient}
                   onChange={(e) => setRecipient(e.target.value)}
+                  autoComplete="off"
                   className="w-full px-4 py-3.5 bg-white/[0.03] border border-white/10 rounded-2xl text-white font-mono text-sm placeholder-[#7a8aaa]/40 focus:outline-none focus:ring-2 focus:ring-[#e8b84b]/30 focus:border-[#e8b84b]/40 transition-all"
                 />
               </div>
@@ -252,6 +265,20 @@ export default function SendPaymentModal({ onClose }: SendPaymentModalProps) {
                     <option value="EURC">EURC</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="text-[#7a8aaa] text-[10px] font-black uppercase tracking-[0.2em] mb-2 block">
+                  Memo (Optional, max 28 chars)
+                </label>
+                <input
+                  type="text"
+                  maxLength={28}
+                  placeholder="Payment note..."
+                  value={memo}
+                  onChange={(e) => setMemo(e.target.value)}
+                  className="w-full px-4 py-3.5 bg-white/[0.03] border border-white/10 rounded-2xl text-white font-mono text-sm placeholder-[#7a8aaa]/40 focus:outline-none focus:ring-2 focus:ring-[#e8b84b]/30 focus:border-[#e8b84b]/40 transition-all"
+                />
               </div>
 
               {/* Conditionally show ZK-gate warning badge */}

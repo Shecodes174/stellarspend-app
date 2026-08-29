@@ -3,9 +3,7 @@
 import React from "react";
 import { z } from "zod";
 import { useForm } from "@/hooks/useForm";
-import { useOffline } from "@/components/offline/OfflineProvider";
 import { Budget } from "@/lib/api/client";
-import { Progress } from "@/components/ui/progress";
 
 const budgetSchema = z
   .object({
@@ -39,6 +37,7 @@ interface BudgetFormProps {
     onCancel?: () => void;
     initialData?: Budget | null;
     isEditing?: boolean;
+    budgetCount?: number;
     spent?: number;
 }
 
@@ -61,7 +60,6 @@ function getProgressTextColor(percentage: number): string {
 }
 
 export default function BudgetForm({ onSubmit, onCancel, initialData, isEditing = false, spent = 0 }: BudgetFormProps) {
-    const { isOnline: _isOnline, queueAction: _queueAction } = useOffline();
     
     // Calculate default end date once per component mount
     const [defaultEndDate] = React.useState(() => {
@@ -72,7 +70,6 @@ export default function BudgetForm({ onSubmit, onCancel, initialData, isEditing 
         register,
         handleSubmit,
         formState: { errors, isValid, isSubmitting },
-        reset: _reset,
     } = useForm<BudgetFormData>({
         schema: budgetSchema,
         defaultValues: {
@@ -149,7 +146,7 @@ export default function BudgetForm({ onSubmit, onCancel, initialData, isEditing 
                         aria-describedby={errors.name ? 'name-error' : undefined}
                         className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition-colors ${errors.name ? 'border-red-500 bg-red-50' : 'border-gray-300 dark:border-gray-600 dark:bg-gray-700'
                             }`}
-                        placeholder="e.g. Groceries"
+                        placeholder="e.g. Monthly Groceries"
                     />
                     {errors.name && (
                         <p id="name-error" className="text-xs text-red-500 mt-1" role="alert">{errors.name.message}</p>
@@ -164,6 +161,7 @@ export default function BudgetForm({ onSubmit, onCancel, initialData, isEditing 
                         id="amount"
                         type="number"
                         step="0.01"
+                        inputMode="decimal"
                         {...register('amount')}
                         aria-required="true"
                         aria-invalid={errors.amount ? 'true' : 'false'}
