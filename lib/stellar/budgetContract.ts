@@ -5,6 +5,7 @@ import {
   Address,
   nativeToScVal,
   scValToNative,
+  xdr,
   rpc as SorobanRpc,
   Transaction,
 } from '@stellar/stellar-sdk';
@@ -42,7 +43,7 @@ export function setMockBudgetsFallback(budgets: Budget[]): void {
   }
 }
 
-function toScVal(value: unknown): any {
+function toScVal(value: unknown): xdr.ScVal {
   if (typeof value === 'string' && value.startsWith('G') && value.length === 56) {
     return new Address(value).toScVal();
   }
