@@ -107,7 +107,7 @@ export default function SendPaymentModal({ onClose }: SendPaymentModalProps) {
         toast({
           title: "Limit Reached",
           description: limitError,
-          variant: "destructive"
+          variant: "destructive",
         });
         setStatus("idle");
         return;
