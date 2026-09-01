@@ -29,6 +29,8 @@ export interface WalletProviderState {
   isConnecting: boolean;
   /** Named walletError to avoid clash with wallet context `error`. */
   walletError: string | null;
+  /** Backward-compatible alias used by existing UI components. */
+  freighterError: string | null;
 }
 
 export interface UseWalletReturn {
@@ -79,6 +81,7 @@ export function useWallet(): UseWalletReturn {
     publicKey: null,
     isConnecting: false,
     walletError: null,
+    freighterError: null,
   });
 
   // Keep a reference to the active provider for direct access (e.g. signing).
@@ -99,6 +102,7 @@ export function useWallet(): UseWalletReturn {
           publicKey: null,
           isConnecting: false,
           walletError: `${provider.getMeta().name} not found. Install it to continue.`,
+          freighterError: `${provider.getMeta().name} not found. Install it to continue.`,
         });
         return;
       }
@@ -110,6 +114,7 @@ export function useWallet(): UseWalletReturn {
         publicKey: null,
         isConnecting: true,
         walletError: null,
+        freighterError: null,
       });
 
       try {
@@ -125,6 +130,7 @@ export function useWallet(): UseWalletReturn {
           publicKey,
           isConnecting: false,
           walletError: null,
+          freighterError: null,
         });
       } catch (err) {
         const message =
@@ -136,6 +142,7 @@ export function useWallet(): UseWalletReturn {
           publicKey: null,
           isConnecting: false,
           walletError: message,
+          freighterError: message,
         });
       }
     },
@@ -152,6 +159,7 @@ export function useWallet(): UseWalletReturn {
       publicKey: null,
       isConnecting: false,
       walletError: null,
+      freighterError: null,
     });
   }, []);
 

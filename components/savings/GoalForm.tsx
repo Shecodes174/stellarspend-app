@@ -138,6 +138,7 @@ export default function GoalForm({ open, onOpenChange, onGoalCreated }: GoalForm
                         <input
                             id="targetAmount"
                             type="number"
+                            inputMode="decimal"
                             aria-required="true"
                             {...register('targetAmount')}
                             className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-green-500 outline-none transition-all ${errors.targetAmount ? 'border-red-500 bg-red-50' : 'border-gray-300 dark:border-gray-600 dark:bg-gray-700'

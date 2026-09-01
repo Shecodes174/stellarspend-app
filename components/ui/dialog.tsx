@@ -8,6 +8,7 @@ interface DialogProps {
 
 interface DialogTriggerProps {
   children: React.ReactNode
+  asChild?: boolean
 }
 
 interface DialogContentProps {
@@ -48,8 +49,12 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   )
 }
 
-export function DialogTrigger({ children }: DialogTriggerProps) {
-  return <>{children}</>
+export function DialogTrigger({ children, asChild = false }: DialogTriggerProps) {
+  if (asChild) {
+    return <>{children}</>
+  }
+
+  return <button type="button">{children}</button>
 }
 
 export function DialogContent({ children, className = '' }: DialogContentProps) {
